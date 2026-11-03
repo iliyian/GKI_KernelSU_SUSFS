@@ -371,7 +371,7 @@ CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
         proc_makefile = Path("fs/proc/Makefile")
         if proc_makefile.exists():
             mf = proc_makefile.read_text()
-            extra = "CFLAGS_task_mmu.o += -Wno-unused-variable -Wno-unused-label\n"
+            extra = "CFLAGS_task_mmu.o += -Wno-error -Wno-unused-variable -Wno-unused-label -Wno-unused-function\n"
             if extra not in mf:
                 proc_makefile.write_text(mf + extra)
                 logger.info("已为 task_mmu.o 关闭 unused-variable/unused-label 警告")
