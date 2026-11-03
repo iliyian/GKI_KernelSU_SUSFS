@@ -367,6 +367,15 @@ CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
         with open(task_mmu, "w") as f:
             f.write(content)
 
+        # ===== 6.1.138: silence unused dentry/bypass left by SUSFS patch =====
+        proc_makefile = Path("fs/proc/Makefile")
+        if proc_makefile.exists():
+            mf = proc_makefile.read_text()
+            extra = "CFLAGS_task_mmu.o += -Wno-unused-variable -Wno-unused-label\n"
+            if extra not in mf:
+                proc_makefile.write_text(mf + extra)
+                logger.info("已为 task_mmu.o 关闭 unused-variable/unused-label 警告")
+
         # ===== 原有的修复逻辑 =====
         fb = f"{self.config.android_version}-{self.config.kernel_version}"
         
