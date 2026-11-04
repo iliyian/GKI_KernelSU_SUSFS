@@ -381,9 +381,9 @@ CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
         with open(task_mmu, "w") as f:
             f.write(content)
 
-        # ===== 6.1.138 only: silence unused dentry/bypass left by SUSFS patch =====
-        # 其它 sublevel（如 124）保持上游原始编译路径，避免 -Wno-error 掩盖真实问题
-        if self.config.sub_level == "138":
+        # ===== 6.1 + SUSFS v2.3.0: silence unused dentry/bypass left by SUSFS patch =====
+        # 6.1.124 / 6.1.138 实测都会留下未使用的 dentry 和 bypass label；只对 6.1 关闭这几个警告
+        if self.config.kernel_version == "6.1":
             proc_makefile = Path("fs/proc/Makefile")
             if proc_makefile.exists():
                 mf = proc_makefile.read_text()
