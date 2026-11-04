@@ -299,7 +299,21 @@ CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
             if patch_file.exists():
                 self._chdir(common_dir)
                 self._run_cmd(f"patch -p1 --fuzz=3 < {patch_file}", check=False)
+                self._check_rejects(common_dir)
                 self._chdir(self.work_dir)
+
+    def _check_rejects(self, common_dir: Path):
+        """patch 的返回值不可靠（脚本一直用 check=False），用 .rej 兜底，避免静默产出坏内核"""
+        rejects = sorted(common_dir.rglob("*.rej"))
+        if not rejects:
+            return
+        for rej in rejects:
+            logger.error(f"SUSFS 补丁存在未应用的 hunk: {rej}")
+            try:
+                logger.error(rej.read_text(errors="replace")[:2000])
+            except OSError:
+                pass
+        raise RuntimeError(f"SUSFS 补丁应用失败：{len(rejects)} 个 .rej 文件")
 
     def apply_sukisu_patches(self):
         logger.info("=== 应用 SukiSU 补丁 ===")
@@ -367,14 +381,16 @@ CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
         with open(task_mmu, "w") as f:
             f.write(content)
 
-        # ===== 6.1.138: silence unused dentry/bypass left by SUSFS patch =====
-        proc_makefile = Path("fs/proc/Makefile")
-        if proc_makefile.exists():
-            mf = proc_makefile.read_text()
-            extra = "CFLAGS_task_mmu.o += -Wno-error -Wno-unused-variable -Wno-unused-label -Wno-unused-function\n"
-            if extra not in mf:
-                proc_makefile.write_text(mf + extra)
-                logger.info("已为 task_mmu.o 关闭 unused-variable/unused-label 警告")
+        # ===== 6.1.138 only: silence unused dentry/bypass left by SUSFS patch =====
+        # 其它 sublevel（如 124）保持上游原始编译路径，避免 -Wno-error 掩盖真实问题
+        if self.config.sub_level == "138":
+            proc_makefile = Path("fs/proc/Makefile")
+            if proc_makefile.exists():
+                mf = proc_makefile.read_text()
+                extra = "CFLAGS_task_mmu.o += -Wno-error -Wno-unused-variable -Wno-unused-label -Wno-unused-function\n"
+                if extra not in mf:
+                    proc_makefile.write_text(mf + extra)
+                    logger.info("已为 task_mmu.o 关闭 unused-variable/unused-label 警告")
 
         # ===== 原有的修复逻辑 =====
         fb = f"{self.config.android_version}-{self.config.kernel_version}"
