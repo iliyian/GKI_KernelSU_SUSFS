@@ -93,7 +93,7 @@ LEGACY_FIXES = {
     "android12-5.10-below-136": {"url": "https://github.com/zzh20188/GKI_KernelSU_SUSFS/raw/refs/heads/legacy/fdinfo.c.patch", "min_sub_level": 136},
 }
 OP8E_PATCH_URL = "https://github.com/zzh20188/GKI_KernelSU_SUSFS/raw/refs/heads/dev/hmbird_patch.c"
-KPM_PATCH_URL = "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux"
+KPM_PATCH_URL = "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/547ae94bcaec53d030398f857950c64662043a5d/kpm/patch_linux"
 
 
 @dataclass
